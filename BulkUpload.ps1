@@ -17,12 +17,17 @@ foreach ($row in $table)
         Clear-Variable dstLib
         $dstLib = Split-Path $row.DestinationPath -Leaf
         $dstSite = Connect-Site -Url $row.DestinationPath -UserName $myuser -Password $mypassword -AllowConnectionFallback -WarningAction Ignore
-        $ID = Get-List -Site $dstSite | Where-Object -Property Address -match $dstLib | Select-Object Id
+        $ID = Get-List -Site $dstSite | Where-Object -Property Address -match $dstLib | Select-Object Id -First 1
         $dstList = Get-List -Site $dstSite -Id $ID.Id 
         Import-Document -SourceFolder $row.SourcePath -DestinationList $dstList -CopySettings $copysettings -Template $propertyTemplate -TaskName $row.SourcePath
         Write-Output $dstList.Address.AbsoluteUri
         $row.Status = 'Upload'+$row.Status
         $table | Export-Csv ./BulkUpload.csv -Delimiter ',' -NoType
     }
-    else {continue}
+    else
+    {
+        Write-Host 'Skipping:' -ForegroundColor Cyan
+        Write-Host $row.DestinationPath
+        continue
+    }
 }
